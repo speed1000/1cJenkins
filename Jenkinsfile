@@ -13,66 +13,45 @@ pipeline{
         EDTWorkspace = "E:\\EDT\\workspace"
         EDTProject = "E:\\EDT\\Ekspert_master"
         EDTLocation = "E:\\1cedtstart\\1C_EDT_2022.2_\\1cedt"
-        VersionOld = "";
-        VersionNew = "";
+        VersionOld = ""
+        VersionNew = ""
     }
-    post{
-        failure{
-            echo "Конвейер завершился с ошибкой"
-        }
-        success{
-            echo "Конвейер выполнен"
-        } 
-    }
-stages{ 
-    
+stages{
     stage("Помещение в гит"){
         steps{
-                script {VersionOld = readFile '${XMLOneC}/VERSION'}
-                bat """chcp 65001\n gitsync --v8version ${Version1c} --ibconnection ${BaseConnection} sync -u ${RepositoryOneCUser} -p ${RepositoryOneCPass} ${RepositoryOneC} ${XMLOneC}"""
-                script {VersionNew = readFile '${XMLOneC}/VERSION'}
-            }
-        post{
-            failure{
-                echo "Помещение в гит провалено"
-            }
-            success{
-                echo "Помещение в гит успешно выполнено"
+                script {
+                    VersionOld = readFile """${XMLOneC}/VERSION"""
+                    bat """chcp 65001\n gitsync --v8version ${Version1c} --ibconnection ${BaseConnection} sync -u ${RepositoryOneCUser} -p ${RepositoryOneCPass} ${RepositoryOneC} ${XMLOneC}"""
+                    VersionNew = readFile """${XMLOneC}/VERSION"""
                 }
             }
         }
     stage("Конвертация в ЕДТ"){
         steps{
                 script {
-                    if (fileExists("${EDTWorkspace}")) {
-                            bat """chcp 65001\n rd /s /q ${EDTWorkspace}"""
-                        }
-                    if (fileExists("${EDTProject}")) {
-                            bat """chcp 65001\n rd /s /q ${EDTProject}"""
-                        }
-                }
-                bat """chcp 65001\n ring edt@2022.2.3 workspace import --configuration-files ${RepositoryEkspert}/src/cf --project ${EDTProject} --workspace-location ${EDTWorkspace} --edt-location ${EDTLocation}"""
-            }
-        post{
-            failure{
-                echo "Конвертация в ЕДТ провалена"
-                }
-            success{
-                echo "Конвертация в ЕДТ выполнена"
+                    if(VersionOld != VersionNew){
+                        if (fileExists("${EDTWorkspace}")) {
+                                bat """chcp 65001\n rd /s /q ${EDTWorkspace}"""
+                            }
+                        if (fileExists("${EDTProject}")) {
+                                bat """chcp 65001\n rd /s /q ${EDTProject}"""
+                            }
+                        bat """chcp 65001\n ring edt@2022.2.3 workspace import --configuration-files ${RepositoryEkspert}/src/cf --project ${EDTProject} --workspace-location ${EDTWorkspace} --edt-location ${EDTLocation}"""
+                    }
                 }
             }
         }
     stage("Запуск сонара"){
         steps{
-                bat """chcp 65001\n cd /d ${RepositoryEkspert} && ${SonarScanner}"""
-            }
-        post{
-            failure{
-                echo "Проверка сонара провалена"
-                }
-            success{
-                echo "Проверка сонара выполнена"
+            script {
+                    if(VersionOld != VersionNew){
+                        try {
+                            bat """chcp 65001\n cd /d ${RepositoryEkspert} && ${SonarScanner}"""
+                        } catch (err) {
+                            echo "Caught: ${err}"
+                        }
                     }
+                }
             }
         }
     }
