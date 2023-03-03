@@ -13,6 +13,8 @@ pipeline{
         EDTWorkspace = "E:\\EDT\\workspace"
         EDTProject = "E:\\EDT\\Ekspert_master"
         EDTLocation = "E:\\1cedtstart\\1C_EDT_2022.2_\\1cedt"
+        VersionOld = "";
+        VersionNew = "";
     }
     post{
         failure{
@@ -23,9 +25,12 @@ pipeline{
         } 
     }
 stages{ 
+    
     stage("Помещение в гит"){
         steps{
+                script {VersionOld = readFile '${XMLOneC}/VERSION'}
                 bat """chcp 65001\n gitsync --v8version ${Version1c} --ibconnection ${BaseConnection} sync -u ${RepositoryOneCUser} -p ${RepositoryOneCPass} ${RepositoryOneC} ${XMLOneC}"""
+                script {VersionNew = readFile '${XMLOneC}/VERSION'}
             }
         post{
             failure{
