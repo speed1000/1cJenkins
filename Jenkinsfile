@@ -15,6 +15,8 @@ pipeline{
         EDTLocation = "E:\\1cedtstart\\1C_EDT_2022.2_\\1cedt"
         VersionOld = ""
         VersionNew = ""
+        ClasterAddres = "localhost:1545"
+        BaseTest = "Ekspert_Test"
     }
 stages{
     stage("Помещение в гит"){
@@ -23,6 +25,19 @@ stages{
                     VersionOld = readFile """${XMLOneC}/VERSION"""
                     bat """chcp 65001\n gitsync --v8version ${Version1c} --ibconnection ${BaseConnection} sync -u ${RepositoryOneCUser} -p ${RepositoryOneCPass} ${RepositoryOneC} ${XMLOneC}"""
                     VersionNew = readFile """${XMLOneC}/VERSION"""
+                }
+            }
+        }
+    stage("Обновление тестовой базы"){
+        steps{
+            script {
+                    if(VersionOld != VersionNew){
+                        bat """chcp 65001\n vrunner scheduledjobs lock --ras ${ClasterAddres} --db ${BaseTest}"""
+                        bat """chcp 65001\n vrunner session kill --ras ${ClasterAddres} --db ${BaseTest} --uccode 1111"""
+                        bat """chcp 65001\n vrunner updatedb --uccode 1111 --nocacheuse --ibconnection ${BaseConnection}"""
+                        bat """chcp 65001\n vrunner scheduledjobs unlock --ras ${ClasterAddres} --db ${BaseTest}"""
+                        bat """chcp 65001\n vrunner session unlock --ras ${ClasterAddres} --db ${BaseTest} --uccode 1111"""
+                    }
                 }
             }
         }
@@ -53,6 +68,16 @@ stages{
                     }
                 }
             }
+        }
+    stage("Дымовые тесты"){
+            steps{
+                bat "chcp 65001\n vrunner  xunit"
+            }
+        }
+    }
+    post{
+        always{
+            allure includeProperties: false,results: [[path: 'report']]
         }
     }
 }
