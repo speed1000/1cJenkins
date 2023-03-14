@@ -17,6 +17,8 @@ pipeline{
         VersionNew = ""
         ClasterAddres = "localhost:1545"
         BaseTest = "Ekspert_Test"
+        User = "Администратор"
+        Pass = "1111"
     }
 stages{
     stage("Помещение в гит"){
@@ -32,11 +34,11 @@ stages{
         steps{
             script {
                     if(VersionOld != VersionNew){
-                        bat """chcp 65001\n vrunner scheduledjobs lock --ras ${ClasterAddres} --db ${BaseTest}"""
-                        bat """chcp 65001\n vrunner session kill --ras ${ClasterAddres} --db ${BaseTest} --uccode 1111"""
-                        bat """chcp 65001\n vrunner updatedb --uccode 1111 --nocacheuse --ibconnection ${BaseConnection}"""
-                        bat """chcp 65001\n vrunner scheduledjobs unlock --ras ${ClasterAddres} --db ${BaseTest}"""
-                        bat """chcp 65001\n vrunner session unlock --ras ${ClasterAddres} --db ${BaseTest} --uccode 1111"""
+                        bat """chcp 65001\n vrunner scheduledjobs lock --ras ${ClasterAddres} --db ${BaseTest} --db-user ${User} --db-pwd ${Pass}"""
+                        bat """chcp 65001\n vrunner session kill --ras ${ClasterAddres} --db ${BaseTest} --uccode 1111 --db-user ${User} --db-pwd ${Pass}"""
+                        bat """chcp 65001\n vrunner updatedb --uccode 1111 --nocacheuse --ibconnection ${BaseConnection} --db-user ${User} --db-pwd ${Pass}"""
+                        bat """chcp 65001\n vrunner scheduledjobs unlock --ras ${ClasterAddres} --db ${BaseTest} --db-user ${User} --db-pwd ${Pass}"""
+                        bat """chcp 65001\n vrunner session unlock --ras ${ClasterAddres} --db ${BaseTest} --uccode 1111 --db-user ${User} --db-pwd ${Pass}"""
                     }
                 }
             }
